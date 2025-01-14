@@ -1,0 +1,20 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Keep the existing general rule
+    match /{document=**} {
+      allow read, write: if request.time < timestamp.date(2025, 2, 5);
+    }
+
+    // Add specific rule for 'songs' collection
+    match /songs/{songId} {
+      allow read: if true;  // Allows read access for all users
+    }
+
+    // Add specific rule for 'lyrics' collection
+    match /lyrics/{lyricsId} {
+      allow read: if true;  // Allows read access for all users
+    }
+  }
+}
