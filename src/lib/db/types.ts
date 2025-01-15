@@ -1,15 +1,25 @@
+import type { GeneratedLyrics } from '../../types/lyrics';
+
 export interface DatabaseOptions {
   genre?: string;
+  mood?: string;
   theme?: string;
-  artist?: string;
+  structure?: string;
   limit?: number;
-  orderBy?: {
-    field: string;
-    direction: 'asc' | 'desc';
-  };
+  orderBy?: SortOption;
+}
+
+export interface SortOption {
+  field: keyof GeneratedLyrics;
+  direction: 'asc' | 'desc';
 }
 
 export interface SaveOptions {
   generateId?: boolean;
   merge?: boolean;
 }
+
+export type DatabaseRecord<T> = T & {
+  id: string;
+  createdAt: string;
+};
