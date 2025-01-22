@@ -75,4 +75,4 @@ firebase-debug.*.log*
 .vite/
 
 # Windsurf IDE files
-.windsurfrules
+.windsurfrules.md
