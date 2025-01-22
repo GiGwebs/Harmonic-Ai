@@ -1,18 +1,37 @@
 import type { GenerateOptions } from '../../types/lyrics';
-import { MUSIC_GENRES } from '../../constants/genres';
 
 export async function generateTitle(options: GenerateOptions): Promise<string> {
-  // This is a mock implementation
-  // In production, this would use an AI model or more sophisticated logic
-  const { genre, mood, theme } = options;
-  
-  const templates = [
-    `${mood} ${theme} Nights`,
-    `${MUSIC_GENRES[genre as keyof typeof MUSIC_GENRES].label} Love`,
-    `Dancing in the ${mood} Light`,
-    `${theme} Dreams`,
-    `${mood} Rhythm`
-  ];
+  try {
+    console.log('[Title] Starting title generation:', { options });
+    
+    const url = '/api/title';
+    console.log('[Title] Making request to:', url);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ options })
+    });
 
-  return templates[Math.floor(Math.random() * templates.length)];
+    console.log('[Title] Response status:', response.status);
+    const responseData = await response.json();
+    console.log('[Title] Response data:', responseData);
+
+    if (!response.ok) {
+      throw new Error(responseData.message || 'Failed to generate title');
+    }
+
+    if (!responseData.title) {
+      throw new Error('No title received from server');
+    }
+
+    return responseData.title;
+  } catch (error) {
+    console.error('[Title] Generation failed:', error);
+    throw error instanceof Error 
+      ? error 
+      : new Error('Failed to generate title. Please try again later.');
+  }
 }

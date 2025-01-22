@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { getApps, getApp, initializeApp } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { jest } from '@jest/globals';
 import type { 
@@ -11,13 +11,22 @@ import type {
   CollectionReference
 } from 'firebase/firestore';
 
+const testConfig = {
+  projectId: 'demo-test',
+  apiKey: 'fake-api-key',
+  authDomain: 'demo-test.firebaseapp.com'
+};
+
 // Initialize Firebase for testing
-const app = initializeApp({
-  projectId: 'demo-harmonic-ai'
-});
+let testApp;
+if (!getApps().length) {
+  testApp = initializeApp(testConfig);
+} else {
+  testApp = getApp();
+}
 
 // Initialize Firestore
-const db = getFirestore(app);
+const db = getFirestore(testApp);
 
 // Connect to the emulator
 connectFirestoreEmulator(db, 'localhost', 8080);

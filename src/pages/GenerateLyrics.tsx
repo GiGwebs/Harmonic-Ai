@@ -8,6 +8,7 @@ import { generateTitle } from '../lib/lyrics/titleGenerator';
 import type { GenerateOptions } from '../types/lyrics';
 import { saveLyrics } from '../lib/db/lyrics';
 import { MUSIC_GENRES, SONG_STRUCTURES } from '../constants/genres';
+import { toast } from 'react-hot-toast';
 
 export function GenerateLyricsPage() {
   const navigate = useNavigate();
@@ -51,18 +52,32 @@ export function GenerateLyricsPage() {
   };
 
   const handleSave = async () => {
-    if (!title || !generatedLyrics) return;
+    if (!title || !generatedLyrics) {
+      toast.error('Please generate lyrics before saving');
+      return;
+    }
 
     try {
-      await saveLyrics({
+      const id = await saveLyrics({
         title,
         content: generatedLyrics,
         options,
+        type: 'generated',
         createdAt: new Date().toISOString()
       });
-      navigate('/database?tab=generated');
+      
+      // Show success message
+      toast.success('Lyrics saved successfully!');
+      
+      // Navigate to database page with hash
+      navigate('/database', { 
+        state: { savedLyricsId: id },
+        replace: true,
+        hash: 'generated' // This will be properly handled by React Router
+      });
     } catch (error) {
       console.error('Failed to save lyrics:', error);
+      toast.error('Failed to save lyrics. Please try again.');
     }
   };
 

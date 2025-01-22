@@ -1,8 +1,34 @@
 import { jest } from '@jest/globals';
-import type { MockFirestore } from './jest';
+
+const mockFirebaseApp = {
+  name: '[DEFAULT]',
+  options: {},
+  automaticDataCollectionEnabled: false
+};
+
+let mockApps: any[] = [];
+
+jest.mock('firebase/app', () => ({
+  getApps: jest.fn(() => mockApps),
+  getApp: jest.fn(() => {
+    if (!mockApps.length) {
+      throw new Error('No Firebase App \'[DEFAULT]\' has been created');
+    }
+    return mockApps[0];
+  }),
+  initializeApp: jest.fn(() => {
+    const app = { ...mockFirebaseApp };
+    mockApps.push(app);
+    return app;
+  }),
+  deleteApp: jest.fn(() => {
+    mockApps = [];
+    return Promise.resolve();
+  })
+}));
 
 // Mock Firestore methods
-const mockFirestore: MockFirestore = {
+const mockFirestore = {
   collection: jest.fn(),
   doc: jest.fn(),
   setDoc: jest.fn(),
@@ -14,13 +40,6 @@ const mockFirestore: MockFirestore = {
   orderBy: jest.fn(),
   limit: jest.fn()
 };
-
-// Mock Firebase app
-jest.mock('firebase/app', () => ({
-  initializeApp: jest.fn(() => ({
-    firestore: () => mockFirestore
-  }))
-}));
 
 // Mock Firestore
 jest.mock('firebase/firestore', () => ({
@@ -36,5 +55,10 @@ jest.mock('firebase/firestore', () => ({
   limit: (...args: any[]) => mockFirestore.limit(...args),
   getFirestore: jest.fn(() => mockFirestore)
 }));
+
+// Reset mock state between tests
+export const resetFirebaseMock = () => {
+  mockApps = [];
+};
 
 export { mockFirestore };

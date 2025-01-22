@@ -1,0 +1,70 @@
+/* Base form styles */
+.form-select,
+.form-input {
+  @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm;
+  min-height: 38px; /* Ensure consistent height */
+}
+
+/* Select element specific styles */
+select.form-select {
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Input element specific styles */
+input.form-input {
+  padding: 0.5rem 0.75rem;
+}
+
+/* Focus states */
+.form-select:focus,
+.form-input:focus {
+  @apply ring-2 ring-indigo-500 ring-offset-0 border-indigo-500;
+  outline: none;
+}
+
+/* Disabled states */
+.form-select:disabled,
+.form-input:disabled {
+  @apply bg-gray-100 cursor-not-allowed;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .form-select,
+  .form-input {
+    @apply bg-gray-900 border-gray-700 text-white;
+  }
+
+  .form-select:disabled,
+  .form-input:disabled {
+    @apply bg-gray-800;
+  }
+
+  select.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23d1d5db' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  }
+}
+
+/* Safari-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  select.form-select {
+    font-size: 16px; /* Prevent zoom on focus in iOS */
+    line-height: 1.3; /* Adjust line height for better alignment */
+  }
+  
+  /* Fix for Safari dropdown arrow positioning */
+  @media not all and (min-resolution:.001dpcm) { 
+    @supports (-webkit-appearance:none) {
+      select.form-select {
+        background-position-x: 97%;
+      }
+    }
+  }
+}

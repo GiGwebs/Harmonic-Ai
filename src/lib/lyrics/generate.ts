@@ -1,51 +1,51 @@
 import type { GenerateOptions, GeneratedLyrics, LyricsSection } from '../../types/lyrics';
 import { SONG_STRUCTURES } from '../../constants/genres';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true
-});
 
 export async function generateLyrics(
   title: string,
   options: GenerateOptions
 ): Promise<GeneratedLyrics> {
   try {
-    // Create a detailed prompt for OpenAI
-    const prompt = `Generate lyrics for a song with the following specifications:
-      Title: "${title}"
-      Genre: ${options.genre}${options.subGenre ? ` (${options.subGenre})` : ''}
-      Mood: ${options.mood}
-      Theme: ${options.theme}
-      Structure: ${options.structure}
-      ${options.featuredGenre ? `Featured Artist Genre: ${options.featuredGenre}` : ''}
-
-      Please follow these guidelines:
-      1. Create lyrics that authentically represent the ${options.genre} genre
-      2. Maintain a ${options.mood} mood throughout
-      3. Explore the theme of ${options.theme}
-      4. Follow a ${options.structure} song structure
-      5. Include appropriate genre-specific elements and slang
-      6. Create memorable hooks and catchy phrases
-      
-      Format the output with clear section labels (Verse 1, Chorus, etc.)`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [{
-        role: "user",
-        content: prompt
-      }],
-      temperature: 0.8,
-      max_tokens: 1000
+    console.log('[Lyrics] Starting lyrics generation:', { 
+      title, 
+      options,
+      timestamp: new Date().toISOString()
+    });
+    
+    const url = '/api/generate';
+    const requestBody = { title, options };
+    console.log('[Lyrics] Making request to:', url, 'with body:', requestBody);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title, options })
     });
 
-    const generatedContent = response.choices[0].message?.content;
-    if (!generatedContent) throw new Error('Failed to generate lyrics');
+    console.log('[Lyrics] Response received:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+    const responseData = await response.json();
+    console.log('[Lyrics] Response data:', {
+      hasLyrics: !!responseData.lyrics,
+      responseKeys: Object.keys(responseData),
+      data: responseData
+    });
+
+    if (!response.ok) {
+      throw new Error(responseData.message || 'Failed to generate lyrics');
+    }
+
+    if (!responseData.lyrics) {
+      throw new Error('No lyrics received from server');
+    }
 
     // Process the generated content into sections
-    const sections = parseGeneratedContent(generatedContent);
+    const sections = parseGeneratedContent(responseData.lyrics);
     const content = formatLyrics(sections, options);
 
     return {
@@ -55,8 +55,10 @@ export async function generateLyrics(
       createdAt: new Date().toISOString()
     };
   } catch (error) {
-    console.error('Lyrics generation failed:', error);
-    throw new Error('Failed to generate lyrics. Please try again later.');
+    console.error('[Lyrics] Generation failed:', error);
+    throw error instanceof Error 
+      ? error 
+      : new Error('Failed to generate lyrics. Please try again later.');
   }
 }
 

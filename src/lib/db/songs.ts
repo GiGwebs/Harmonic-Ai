@@ -1,6 +1,6 @@
-import { db } from '../../config/firebase';
+import { db } from '../firebase';
 import { collection, addDoc, deleteDoc, doc, getDocs, query, orderBy } from 'firebase/firestore';
-import type { SongAnalysis } from '../../types';
+import type { SongAnalysis } from '../../types/songs';
 
 const SONGS_COLLECTION = 'songs';
 

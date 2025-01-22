@@ -1,64 +1,106 @@
-import { collection, deleteDoc, doc, getDocs, limit, orderBy, query } from 'firebase/firestore';
-import { db } from '../../config/firebase';
+import { db } from '../firebase';
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy, limit } from 'firebase/firestore';
+import type { GenerateOptions, GeneratedLyrics } from '../../types/lyrics';
 import type { DatabaseOptions } from './types';
-import type { GeneratedLyrics } from '../../types/lyrics';
-import { saveDocument, getDocuments } from './core';
 
-const COLLECTION_NAME = 'lyrics';
+const LYRICS_COLLECTION = 'lyrics';
 
-/**
- * Saves lyrics to the database with validation and metadata
- */
 export async function saveLyrics(lyrics: GeneratedLyrics): Promise<string> {
-  // Validate required fields
-  if (!lyrics.title || !lyrics.content || !lyrics.options) {
-    throw new Error('Missing required fields in lyrics data');
+  try {
+    const lyricsWithType = {
+      ...lyrics,
+      type: lyrics.type || 'generated',
+      createdAt: lyrics.createdAt || new Date().toISOString()
+    };
+
+    console.log('[Firestore] Saving lyrics:', {
+      title: lyricsWithType.title,
+      type: lyricsWithType.type,
+      createdAt: lyricsWithType.createdAt,
+      hasOptions: !!lyricsWithType.options
+    });
+
+    if (!db) throw new Error('Firestore not initialized');
+    const docRef = await addDoc(collection(db, LYRICS_COLLECTION), lyricsWithType);
+    console.log('[Firestore] Lyrics saved successfully with ID:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error('[Firestore] Error saving lyrics:', error);
+    throw error;
   }
-
-  // Validate content length
-  if (lyrics.content.length > 50000) { // 50KB limit
-    throw new Error('Lyrics content exceeds maximum length');
-  }
-
-  // Sanitize and prepare data
-  const sanitizedLyrics = {
-    ...lyrics,
-    title: lyrics.title.trim(),
-    content: lyrics.content.trim(),
-    options: {
-      ...lyrics.options,
-      genre: lyrics.options.genre.toLowerCase(),
-      mood: lyrics.options.mood.toLowerCase(),
-      theme: lyrics.options.theme.toLowerCase()
-    },
-    metadata: {
-      wordCount: lyrics.content.split(/\s+/).length,
-      verseCount: (lyrics.content.match(/\[verse/gi) || []).length,
-      hasChorus: /\[chorus\]/i.test(lyrics.content),
-      language: 'en', // Default to English for now
-      lastModified: new Date().toISOString()
-    }
-  };
-
-  return saveDocument(COLLECTION_NAME, sanitizedLyrics);
 }
 
-/**
- * Retrieves lyrics with optional filtering and sorting
- */
+export async function getAllGeneratedLyrics(): Promise<Array<GeneratedLyrics & { id: string }>> {
+  try {
+    console.log('[Firestore] Starting getAllGeneratedLyrics');
+    
+    if (!db) {
+      console.error('[Firestore] Database not initialized');
+      throw new Error('Firestore not initialized');
+    }
+    
+    console.log('[Firestore] Creating collection reference:', LYRICS_COLLECTION);
+    const lyricsRef = collection(db, LYRICS_COLLECTION);
+    
+    console.log('[Firestore] Building query');
+    // First try without orderBy to test connection
+    const q = query(
+      lyricsRef,
+      where('type', '==', 'generated')
+    );
+    
+    console.log('[Firestore] Executing query');
+    const querySnapshot = await getDocs(q);
+    
+    console.log('[Firestore] Query completed:', {
+      size: querySnapshot.size,
+      empty: querySnapshot.empty,
+      metadata: querySnapshot.metadata,
+      exists: !querySnapshot.empty
+    });
+    
+    const lyrics = querySnapshot.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id
+    })) as Array<GeneratedLyrics & { id: string }>;
+
+    // Sort in memory for development
+    lyrics.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+    
+    return lyrics;
+  } catch (error: any) {
+    console.error('[Firestore] Error in getAllGeneratedLyrics:', error);
+    if (error.code === 'failed-precondition' && error.message.includes('index')) {
+      throw new Error('Database index not ready. Please wait a few moments and try again.');
+    }
+    throw new Error(`Failed to fetch lyrics: ${error.message}`);
+  }
+}
+
+export async function deleteGeneratedLyrics(id: string): Promise<void> {
+  try {
+    if (!db) throw new Error('Firestore not initialized');
+    await deleteDoc(doc(db, LYRICS_COLLECTION, id));
+  } catch (error) {
+    console.error('Error deleting lyrics:', error);
+    throw error;
+  }
+}
+
 export async function getLyrics(
   options?: DatabaseOptions
 ): Promise<Array<GeneratedLyrics & { id: string }>> {
-  return getDocuments<GeneratedLyrics>(COLLECTION_NAME, options);
+  return getDocuments<GeneratedLyrics>(LYRICS_COLLECTION, options);
 }
 
-/**
- * Gets the most recently generated lyrics
- */
 export async function getLatestLyrics(
   limit: number = 10
 ): Promise<Array<GeneratedLyrics & { id: string }>> {
-  return getDocuments<GeneratedLyrics>(COLLECTION_NAME, {
+  return getDocuments<GeneratedLyrics>(LYRICS_COLLECTION, {
     orderBy: {
       field: 'createdAt',
       direction: 'desc'
@@ -67,16 +109,14 @@ export async function getLatestLyrics(
   });
 }
 
-/**
- * Deletes lyrics by ID with validation
- */
 export async function deleteLyrics(id: string): Promise<void> {
   if (!id) {
     throw new Error('Lyrics ID is required');
   }
 
   try {
-    const docRef = doc(db, COLLECTION_NAME, id);
+    if (!db) throw new Error('Firestore not initialized');
+    const docRef = doc(db, LYRICS_COLLECTION, id);
     await deleteDoc(docRef);
   } catch (error: any) {
     console.error('Error deleting lyrics:', error);
@@ -84,9 +124,6 @@ export async function deleteLyrics(id: string): Promise<void> {
   }
 }
 
-/**
- * Searches lyrics by content or metadata
- */
 export async function searchLyrics(
   searchTerm: string
 ): Promise<Array<GeneratedLyrics & { id: string }>> {
@@ -97,13 +134,13 @@ export async function searchLyrics(
   const normalizedTerm = searchTerm.toLowerCase().trim();
   
   try {
-    const snapshot = await getDocs(
-      query(
-        collection(db, COLLECTION_NAME),
-        orderBy('createdAt', 'desc'),
-        limit(100) // Reasonable limit for search results
-      )
+    if (!db) throw new Error('Firestore not initialized');
+    const q = query(
+      collection(db, LYRICS_COLLECTION),
+      orderBy('createdAt', 'desc'),
+      limit(100)
     );
+    const snapshot = await getDocs(q);
 
     return snapshot.docs
       .map(doc => ({ ...doc.data() as GeneratedLyrics, id: doc.id }))
@@ -116,5 +153,33 @@ export async function searchLyrics(
   } catch (error: any) {
     console.error('Error searching lyrics:', error);
     throw new Error(`Failed to search lyrics: ${error.message}`);
+  }
+}
+
+async function getDocuments<T>(
+  collectionName: string,
+  options?: DatabaseOptions
+): Promise<Array<T & { id: string }>> {
+  try {
+    if (!db) throw new Error('Firestore not initialized');
+    
+    const constraints: any[] = [];
+    if (options?.orderBy) {
+      constraints.push(orderBy(options.orderBy.field, options.orderBy.direction));
+    }
+    if (options?.limit) {
+      constraints.push(limit(options.limit));
+    }
+    
+    const q = query(collection(db, collectionName), ...constraints);
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Array<T & { id: string }>;
+  } catch (error) {
+    console.error('Error fetching documents:', error);
+    throw error;
   }
 }

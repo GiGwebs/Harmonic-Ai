@@ -4,8 +4,9 @@ import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { AnalyzePage } from './pages/AnalyzePage';
 import { GenerateLyricsPage } from './pages/GenerateLyrics';
-import { DatabasePage } from './pages/DatabasePage';
+import SongDatabasePage from './pages/SongDatabasePage';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import VerifyAccessPage from './pages/debug/verify-access';
 
 export default function App() {
   return (
@@ -20,7 +21,8 @@ export default function App() {
             <Route path="/" element={<Hero />} />
             <Route path="/analyze" element={<AnalyzePage />} />
             <Route path="/generate" element={<GenerateLyricsPage />} />
-            <Route path="/database" element={<DatabasePage />} />
+            <Route path="/database" element={<SongDatabasePage />} />
+            <Route path="/debug/verify-access" element={<VerifyAccessPage />} />
           </Routes>
         </div>
       </Router>

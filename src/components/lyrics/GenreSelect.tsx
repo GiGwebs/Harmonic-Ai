@@ -20,27 +20,31 @@ export function GenreSelect({
 }: GenreSelectProps) {
   return (
     <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as Genre)}
-        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500"
+        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
       >
-        {allowEmpty && <option value="">No Featured Artist</option>}
+        {allowEmpty && <option value="">Select a genre</option>}
         {Object.entries(MUSIC_GENRES).map(([key, { label }]) => (
           <option key={key} value={key}>{label}</option>
         ))}
       </select>
 
       {value && onSubGenreChange && (
-        <select
-          value={selectedSubGenre}
-          onChange={(e) => onSubGengeChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500"
-        >
-          {MUSIC_GENRES[value].subGenres.map(subGenre => (
-            <option key={subGenre} value={subGenre}>{subGenre}</option>
-          ))}
-        </select>
+        <div className="mt-2">
+          <label className="block text-sm font-medium text-gray-700">Sub-genre</label>
+          <select
+            value={selectedSubGenre}
+            onChange={(e) => onSubGenreChange(e.target.value)}
+            className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+          >
+            {MUSIC_GENRES[value].subGenres.map(subGenre => (
+              <option key={subGenre} value={subGenre}>{subGenre}</option>
+            ))}
+          </select>
+        </div>
       )}
     </div>
   );
