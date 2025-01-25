@@ -13,6 +13,7 @@ import { analyzeHandler } from './api/analyze.js';
 import { generateHandler } from './api/generate.js';
 import { titleHandler } from './api/title.js';
 import { trendsHandler } from './api/trends.js';
+import { trendsSummaryHandler } from './api/trendsSummary.js';
 import { youtubeInsightsHandler } from './api/youtubeInsights.js';
 import { validateServerEnv, getHealthStatus } from './config/server-env.js';
 import { spotifyAuthService } from './services/spotifyAuth.js';
@@ -154,6 +155,7 @@ async function initializeServer() {
     app.post('/api/title', asyncHandler(titleHandler));
     app.get('/api/trending-genres', asyncHandler(trendsHandler));
     app.get('/api/youtube-insights', asyncHandler(youtubeInsightsHandler));
+    app.get('/api/trends/summary', asyncHandler(trendsSummaryHandler));
 
     // Error handling middleware
     app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -173,6 +175,7 @@ async function initializeServer() {
       console.log(`- http://localhost:${port}/api/health`);
       console.log(`- http://localhost:${port}/api/trending-genres`);
       console.log(`- http://localhost:${port}/api/youtube-insights`);
+      console.log(`- http://localhost:${port}/api/trends/summary`);
       console.log('[Server] Environment:', process.env.NODE_ENV || 'development');
       console.log('[Server] Node.js version:', process.version);
     });
