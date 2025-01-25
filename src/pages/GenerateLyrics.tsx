@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { LyricsForm } from '../components/lyrics/LyricsForm';
 import { LyricsPreview } from '../components/lyrics/LyricsPreview';
 import { TitleGenerator } from '../components/lyrics/TitleGenerator';
+import { TrendingGenresBox } from '../components/trends/TrendingGenresBox';
+import { YouTubeInsightsBox } from '../components/trends/YouTubeInsightsBox';
 import { generateLyrics } from '../lib/lyrics/generate';
 import { generateTitle } from '../lib/lyrics/titleGenerator';
 import type { GenerateOptions } from '../types/lyrics';
@@ -52,67 +54,54 @@ export function GenerateLyricsPage() {
   };
 
   const handleSave = async () => {
-    if (!title || !generatedLyrics) {
-      toast.error('Please generate lyrics before saving');
-      return;
-    }
-
+    if (!generatedLyrics || !title) return;
+    
     try {
-      const id = await saveLyrics({
+      await saveLyrics({
         title,
         content: generatedLyrics,
-        options,
-        type: 'generated',
-        createdAt: new Date().toISOString()
+        ...options,
+        createdAt: new Date()
       });
-      
-      // Show success message
       toast.success('Lyrics saved successfully!');
-      
-      // Navigate to database page with hash
-      navigate('/database', { 
-        state: { savedLyricsId: id },
-        replace: true,
-        hash: 'generated' // This will be properly handled by React Router
-      });
+      navigate('/database');
     } catch (error) {
       console.error('Failed to save lyrics:', error);
-      toast.error('Failed to save lyrics. Please try again.');
+      toast.error('Failed to save lyrics');
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-4xl font-bold text-gray-900">
-          Generate Lyrics
-        </h1>
-
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-6">
-              <TitleGenerator
-                value={title}
-                onChange={setTitle}
-                options={options}
-                onGenerate={handleGenerateTitle}
-                isGenerating={isGeneratingTitle}
-              />
-
-              <LyricsForm
-                options={options}
-                onOptionsChange={setOptions}
-                onGenerate={handleGenerate}
-                isGenerating={isGenerating}
-              />
-            </div>
-
+      <h1 className="text-3xl font-bold mb-8">Generate Lyrics</h1>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <TitleGenerator
+              title={title}
+              setTitle={setTitle}
+              onGenerate={handleGenerateTitle}
+              isGenerating={isGeneratingTitle}
+            />
+            <LyricsForm
+              options={options}
+              onOptionsChange={setOptions}
+              onGenerate={handleGenerate}
+              isGenerating={isGenerating}
+            />
+          </div>
+          {generatedLyrics && (
             <LyricsPreview
+              title={title}
               lyrics={generatedLyrics}
               onSave={handleSave}
               isGenerating={isGenerating}
             />
-          </div>
+          )}
+        </div>
+        <div className="space-y-8">
+          <TrendingGenresBox />
+          <YouTubeInsightsBox />
         </div>
       </div>
     </div>

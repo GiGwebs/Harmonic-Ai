@@ -2,12 +2,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
-import { validateEnv } from './config/env';
+import { validateClientEnv } from './config/client-env';
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
-// Validate environment variables before starting the app
-validateEnv();
+// Validate CLIENT-SPECIFIC environment variables
+validateClientEnv();
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -21,7 +21,7 @@ const firebaseConfig = {
 
 console.log('[Firebase] Initializing app with config:', {
   hasApiKey: !!firebaseConfig.apiKey,
-  hasProjectId: !!firebaseConfig.projectId,
+  projectId: !!firebaseConfig.projectId,
   hasAppId: !!firebaseConfig.appId
 });
 
