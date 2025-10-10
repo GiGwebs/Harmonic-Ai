@@ -16,7 +16,7 @@
     "test:original": "jest --config jest.config.cjs"
   },
   "dependencies": {
-    "@radix-ui/react-tooltip": "^1.1.7",
+    "@radix-ui/react-tooltip": "^1.2.8",
     "@types/express-session": "^1.18.1",
     "@types/node": "^20.8.2",
     "@types/react-transition-group": "^4.4.12",
